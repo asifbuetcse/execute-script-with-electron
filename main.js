@@ -1,8 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const fs = require('fs');
 const path = require('path');
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
+const fs = require('fs');
+const { exec } = require('child_process');
 
 let mainWindow;
 
@@ -18,57 +17,61 @@ function createWindow() {
     });
 
     mainWindow.loadFile('index.html');
+}
 
-    mainWindow.on('closed', function () {
-        mainWindow = null;
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
+
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    }
+});
+
+function uploadFile(fileType, options) {
+    dialog.showOpenDialog(mainWindow, options).then(({ filePaths }) => {
+        if (filePaths.length > 0) {
+            const filePath = filePaths[0];
+            let counter = 1;
+            const fileExtension = fileType === 'script' ? 'js' : 'json';
+
+            while (fs.existsSync(`${fileType}_${counter}.${fileExtension}`)) {
+                counter++;
+            }
+
+            fs.copyFileSync(filePath, `${fileType}_${counter}.${fileExtension}`);
+            mainWindow.webContents.send('file-uploaded', fileType, `${fileType}_${counter}.${fileExtension}`);
+        }
     });
 }
 
-app.on('ready', createWindow);
-
-app.on('window-all-closed', function () {
-    if (process.platform !== 'darwin') app.quit();
-});
-
-app.on('activate', function () {
-    if (mainWindow === null) createWindow();
-});
-
-ipcMain.on('upload-script', async (event) => {
+ipcMain.on('upload-file', (event, fileType) => {
     const options = {
-        filters: [{ name: 'JavaScript', extensions: ['js'] }],
+        filters: [{ name: 'JSON', extensions: ['json'] }],
     };
 
-    const { filePaths } = await dialog.showOpenDialog(mainWindow, options);
-
-    if (filePaths.length > 0) {
-        const scriptPath = filePaths[0];
-        let counter = 1;
-
-        while (fs.existsSync(`script_${counter}.js`)) {
-            counter++;
-        }
-
-        fs.copyFileSync(scriptPath, `script_${counter}.js`);
-        mainWindow.webContents.send('script-uploaded', `script_${counter}.js`);
+    if (fileType === 'script') {
+        options.filters = [{ name: 'JavaScript', extensions: ['js'] }];
     }
+
+    uploadFile(fileType, options);
 });
 
-ipcMain.on('execute-script', async (event, scriptPath) => {
-    try {
-        await exec('npm install puppeteer');
-        const { stdout, stderr } = await exec(`node ${scriptPath}`);
-
-        if (stdout) {
-            console.log(stdout);
-            mainWindow.webContents.send('script-executed', stdout);
-        }
-        if (stderr) {
-            console.error(stderr);
+ipcMain.on('execute-script', (event, scriptPath) => {
+    console.log('Executing script:', scriptPath);
+    exec(`node ${scriptPath}`, (error, stdout, stderr) => {
+        if (error) {
+            console.error('Error executing script:', error);
             mainWindow.webContents.send('script-error', stderr);
+            return;
         }
-    } catch (error) {
-        console.error(error);
-        mainWindow.webContents.send('script-error', error);
-    }
+
+        console.log('Script executed successfully:', stdout);
+        mainWindow.webContents.send('script-executed', stdout);
+    });
 });

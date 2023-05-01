@@ -1,1 +1,31 @@
 node_modules
+# Node.js files
+node_modules/
+npm-debug.log
+
+# Dependency directories
+jspm_packages/
+typings/
+
+# Build output
+dist/
+build/
+out/
+lib/
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Miscellaneous
+*.DS_Store
+Thumbs.db
+package-lock.json

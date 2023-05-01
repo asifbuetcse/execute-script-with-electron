@@ -4,12 +4,48 @@
 <head>
     <meta charset="UTF-8" />
     <title>Electron App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #status {
+            margin-top: 30px;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Upload and Execute Node.js Script</h1>
-    <button id="upload-button">Upload Script</button>
-    <button id="execute-button" disabled>Execute Script</button>
+    <h1>Upload and Execute Script and Config</h1>
+    <button id="upload-script-button">Upload Script</button>
+    <button id="upload-credentials-button">Upload Credentials</button>
+    <button id="upload-config-button">Upload Config</button>
+    <button id="execute-button">Execute Script</button>
     <div id="status"></div>
 
     <script>
@@ -19,33 +55,44 @@
 
         let scriptPath = '';
 
-        document.getElementById('upload-button').addEventListener('click', () => {
-            ipcRenderer.send('upload-script');
-        });
+        function uploadFile(event, fileType) {
+            ipcRenderer.send('upload-file', fileType);
+        }
+
+        function setUploadedFilePath(event, fileType, newPath) {
+            if (fileType === 'script') {
+                scriptPath = newPath;
+            }
+            document.getElementById('status').innerHTML +=
+                `<div>${fileType} uploaded: <span id="${fileType}-path">${newPath}</span></div>`;
+        }
+
+        document.getElementById('upload-script-button').addEventListener('click', () => uploadFile(null, 'script'));
+        document.getElementById('upload-credentials-button').addEventListener('click', () => uploadFile(null,
+            'credentials'));
+        document.getElementById('upload-config-button').addEventListener('click', () => uploadFile(null, 'config'));
 
         document.getElementById('execute-button').addEventListener('click', () => {
             if (scriptPath) {
+                console.log('Executing script:', scriptPath);
                 ipcRenderer.send('execute-script', scriptPath);
+            } else {
+                console.error('No script file selected.');
             }
         });
 
-        ipcRenderer.on('script-uploaded', (event, newPath) => {
-            scriptPath = newPath;
-            document.getElementById('status').innerHTML =
-                `Script uploaded: <span id="script-path">${scriptPath}</span>`;
-            document.getElementById('execute-button').disabled = false;
-        });
+        ipcRenderer.on('file-uploaded', setUploadedFilePath);
 
         ipcRenderer.on('script-executed', (event, stdout) => {
             document.getElementById('status').innerText =
                 'Script executed successfully. Check the console for output.';
-            console.log(stdout);
+            console.log('Script output:', stdout);
         });
 
         ipcRenderer.on('script-error', (event, stderr) => {
             document.getElementById('status').innerText =
-                'There might be some Error or Warning executing the script. Check the console for details.';
-            console.error(stderr);
+                'Error executing the script. Check the console for details.';
+            console.error('Script error:', stderr);
         });
     </script>
 </body>
