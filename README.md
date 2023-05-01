@@ -21,7 +21,7 @@ Before running this application, make sure you have the following installed:
 
 1. Clone this repository:
 
-git clone https://github.com/yourusername/electron-node-script-executor.git
+git clone https://github.com/asifbuetcse/execute-script-with-electron
 
 2. Change into the project directory:
 
