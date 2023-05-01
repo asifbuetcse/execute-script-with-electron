@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Electron App</title>
+</head>
+
+<body>
+    <h1>Upload and Execute Node.js Script</h1>
+    <button id="upload-button">Upload Script</button>
+    <button id="execute-button" disabled>Execute Script</button>
+    <div id="status"></div>
+
+    <script>
+        const {
+            ipcRenderer
+        } = require('electron');
+
+        let scriptPath = '';
+
+        document.getElementById('upload-button').addEventListener('click', () => {
+            ipcRenderer.send('upload-script');
+        });
+
+        document.getElementById('execute-button').addEventListener('click', () => {
+            if (scriptPath) {
+                ipcRenderer.send('execute-script', scriptPath);
+            }
+        });
+
+        ipcRenderer.on('script-uploaded', (event, newPath) => {
+            scriptPath = newPath;
+            document.getElementById('status').innerHTML =
+                `Script uploaded: <span id="script-path">${scriptPath}</span>`;
+            document.getElementById('execute-button').disabled = false;
+        });
+
+        ipcRenderer.on('script-executed', (event, stdout) => {
+            document.getElementById('status').innerText =
+                'Script executed successfully. Check the console for output.';
+            console.log(stdout);
+        });
+
+        ipcRenderer.on('script-error', (event, stderr) => {
+            document.getElementById('status').innerText =
+                'There might be some Error or Warning executing the script. Check the console for details.';
+            console.error(stderr);
+        });
+    </script>
+</body>
+
+</html>
