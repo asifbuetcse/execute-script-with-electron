@@ -1,7 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
 
 let mainWindow;
 
@@ -15,6 +14,7 @@ function createWindow() {
             enableRemoteModule: true,
         },
     });
+    mainWindow.setMenuBarVisibility(false);
 
     mainWindow.loadFile('index.html');
 }
@@ -31,6 +31,50 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
     }
+});
+
+ipcMain.on('populate-dropdowns', () => {
+    mainWindow.webContents.send('scripts-dropdown-data', getFiles('script'));
+    mainWindow.webContents.send('credentials-dropdown-data', getFiles('credentials'));
+});
+
+ipcMain.on('upload-file', (event, fileType) => {
+    let options = {
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+    };
+
+    if (fileType === 'script') {
+        options = {
+            filters: [{ name: 'JavaScript', extensions: ['js'] }],
+        };
+    }
+
+    uploadFile(fileType, options);
+});
+
+ipcMain.on('execute-script', (event, scriptPath) => {
+    console.log('Executing script:', scriptPath);
+    logToFile(`Executing script: ${scriptPath}`);
+
+    exec('npm ls puppeteer', (error, stdout) => {
+        if (error || !stdout.includes('puppeteer')) {
+            console.log('Puppeteer not found. Installing...');
+            logToFile('Puppeteer not found. Installing...');
+            exec('npm install puppeteer', (error, stdout, stderr) => {
+                if (error) {
+                    console.error('Error installing Puppeteer:', error);
+                    logToFile(`Error installing Puppeteer: ${error}`);
+                    mainWindow.webContents.send('script-error', `Error installing Puppeteer: ${error}`);
+                    return;
+                }
+                console.log('Puppeteer installed successfully:', stdout);
+                logToFile(`Puppeteer installed successfully: ${stdout}`);
+                execScript(scriptPath);
+            });
+        } else {
+            execScript(scriptPath);
+        }
+    });
 });
 
 function uploadFile(fileType, options) {
@@ -56,20 +100,11 @@ function uploadFile(fileType, options) {
     });
 }
 
-ipcMain.on('upload-file', (event, fileType) => {
-    let options = {
-        filters: [{ name: 'JSON', extensions: ['json'] }],
-    };
-
-    if (fileType === 'script') {
-        options = {
-            filters: [{ name: 'JavaScript', extensions: ['js'] }],
-        };
-    }
-
-    uploadFile(fileType, options);
-});
-
+function getFiles(fileType) {
+    const extension = fileType === 'script' ? '.js' : '.json';
+    const files = fs.readdirSync('.').filter(file => file.endsWith(extension));
+    return files;
+}
 
 function logToFile(message) {
     const logFilePath = path.join(app.getPath('userData'), 'app-sample-log.txt');
@@ -85,56 +120,3 @@ function logToFile(message) {
         }
     });
 }
-
-ipcMain.on('execute-script', (event, scriptPath) => {
-    console.log('Executing script:', scriptPath);
-    logToFile(`Executing script: ${scriptPath}`);
-
-    // Check if Puppeteer is installed
-    exec('npm ls puppeteer', (error, stdout) => {
-        if (error || !stdout.includes('puppeteer')) {
-            // Install Puppeteer
-            console.log('Puppeteer not found. Installing...');
-            logToFile('Puppeteer not found. Installing...');
-            exec('npm install puppeteer', (error, stdout, stderr) => {
-                if (error) {
-                    console.error('Error installing Puppeteer:', error);
-                    logToFile(`Error installing Puppeteer: ${error}`);
-                    mainWindow.webContents.send('script-error', `Error installing Puppeteer: ${error}`);
-                    return;
-                }
-                console.log('Puppeteer installed successfully:', stdout);
-                logToFile(`Puppeteer installed successfully: ${stdout}`);
-                // Execute the script after Puppeteer is installed
-                execScript(scriptPath);
-            });
-        } else {
-            // Execute the script if Puppeteer is already installed
-            execScript(scriptPath);
-        }
-    });
-});
-
-function execScript(scriptPath) {
-    exec(`node ${scriptPath}`, (error, stdout, stderr) => {
-        if (error) {
-            console.error('Error executing script:', error);
-            logToFile(`Error executing script: ${error}`);
-            mainWindow.webContents.send('script-error', stderr);
-            return;
-        }
-
-        console.log('Script executed successfully:', stdout);
-        logToFile(`Script executed successfully: ${stdout}`);
-        mainWindow.webContents.send('script-executed', stdout);
-    });
-}
-
-
-
-
-ipcMain.on('log-message', (event, message) => {
-    console.log(`Log message: ${message}`);
-    logToFile(`Log message: ${message}`);
-});
-

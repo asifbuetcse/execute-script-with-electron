@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Electron App</title>
+    <title>AMSL UI Automation Tool</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,17 +21,23 @@
         }
 
         button {
-            padding: 10px 20px;
+            padding: 10px;
             margin: 5px;
             background-color: #4CAF50;
             color: white;
             font-size: 1rem;
             border: none;
             cursor: pointer;
+            width: 200px;
+            height: 50px;
         }
 
         button:hover {
             background-color: #45a049;
+        }
+
+        .segment {
+            margin-bottom: 20px;
         }
 
         #status {
@@ -41,22 +47,68 @@
 </head>
 
 <body>
-    <h1>Upload and Execute Script and Config</h1>
-    <button id="upload-script-button">Upload Script</button>
-    <button id="upload-credentials-button">Upload Credentials</button>
-    <button id="upload-config-button">Upload Config</button>
-    <button id="execute-button">Execute Script</button>
+    <h1>AMSL UI Automation Tool</h1>
+    <div class="segment">
+        <h2>Pre-requisite section</h2>
+        <button id="upload-script-button">Upload Script</button>
+        <button id="upload-credentials-button">Upload Credentials</button>
+        <select id="scripts-dropdown">
+        </select>
+        <select id="credentials-dropdown">
+        </select>
+    </div>
+    <div class="segment">
+        <h2>Input section</h2>
+        <label for="app-url">Application URL:</label>
+        <input type="text" id="app-url" />
+        <label for="open-browser">Open browser:</label>
+        <input type="checkbox" id="open-browser" />
+    </div>
+    <div class="segment">
+        <h2>Execution section</h2>
+        <button id="execute-button">Execute Script</button>
+    </div>
     <div id="status"></div>
-
     <script>
         const {
             ipcRenderer
         } = require('electron');
 
-        let scriptPath = '';
+        function populateDropdowns() {
+            ipcRenderer.send('populate-dropdowns');
+        }
 
-        function uploadFile(event, fileType) {
+        function setDropdownData(dropdownId, files) {
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.innerHTML = '';
+
+            for (const file of files) {
+                const option = document.createElement('option');
+                option.value = file;
+                option.text = file;
+                dropdown.add(option);
+            }
+        }
+
+        ipcRenderer.on('scripts-dropdown-data', (event, files) => {
+            setDropdownData('scripts-dropdown', files);
+        });
+
+        ipcRenderer.on('credentials-dropdown-data', (event, files) => {
+            setDropdownData('credentials-dropdown', files);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateDropdowns();
+        });
+
+        let scriptPath = '';
+        function uploadFile(fileType, dropdownId) {
             ipcRenderer.send('upload-file', fileType);
+            ipcRenderer.once('file-uploaded', (event, uploadedFileType, newPath) => {
+                setUploadedFilePath(event, uploadedFileType, newPath);
+                populateDropdowns();
+            });
         }
 
         function setUploadedFilePath(event, fileType, newPath) {
@@ -67,10 +119,8 @@
                 `<div>${fileType} uploaded: <span id="${fileType}-path">${newPath}</span></div>`;
         }
 
-        document.getElementById('upload-script-button').addEventListener('click', () => uploadFile(null, 'script'));
-        document.getElementById('upload-credentials-button').addEventListener('click', () => uploadFile(null,
-            'credentials'));
-        document.getElementById('upload-config-button').addEventListener('click', () => uploadFile(null, 'config'));
+        document.getElementById('upload-script-button').addEventListener('click', () => uploadFile('script', 'scripts-dropdown'));
+        document.getElementById('upload-credentials-button').addEventListener('click', () => uploadFile('credentials', 'credentials-dropdown'));
 
         document.getElementById('execute-button').addEventListener('click', () => {
             if (scriptPath) {
@@ -82,7 +132,6 @@
         });
 
         ipcRenderer.on('file-uploaded', setUploadedFilePath);
-
         ipcRenderer.on('script-executed', (event, stdout) => {
             document.getElementById('status').innerText =
                 'Script executed successfully. Check the console for output.';
@@ -94,6 +143,19 @@
                 'Error executing the script. Check the console for details.';
             console.error('Script error:', stderr);
         });
+
+        function selectFile(event, fileType, fileSelector) {
+            const selectedFile = document.getElementById(fileSelector).value;
+            if (selectedFile) {
+                setUploadedFilePath(event, fileType, selectedFile);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("totally loaded");
+            populateDropdowns();
+        });
+
     </script>
 </body>
 
