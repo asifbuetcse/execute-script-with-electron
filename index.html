@@ -17,13 +17,13 @@
         }
 
         h1 {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         button {
             padding: 10px;
             margin: 5px;
-            background-color: #4CAF50;
+            background-color: #333;
             color: white;
             font-size: 1rem;
             border: none;
@@ -33,15 +33,41 @@
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: #555;
         }
 
         .segment {
             margin-bottom: 20px;
+            border: 1px solid #aaa;
+            padding: 20px;
+            width: 50%;
+            background-color: white;
+        }
+
+        .segment-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .input-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
         }
 
         #status {
             margin-top: 30px;
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        select {
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -50,26 +76,42 @@
     <h1>AMSL UI Automation Tool</h1>
     <div class="segment">
         <h2>Pre-requisite section</h2>
-        <button id="upload-script-button">Upload Script</button>
-        <button id="upload-credentials-button">Upload Credentials</button>
-        <select id="scripts-dropdown">
-        </select>
-        <select id="credentials-dropdown">
-        </select>
+        <div class="segment-content">
+            <div class="input-container">
+                <button id="upload-script-button">Upload Script</button>
+                <label for="scripts-dropdown">Script:</label>
+                <select id="scripts-dropdown"></select>
+            </div>
+            <div class="input-container">
+                <button id="upload-credentials-button">Upload Credentials</button>
+                <label for="credentials-dropdown">Credentials:</label>
+                <select id="credentials-dropdown"></select>
+            </div>
+        </div>
     </div>
     <div class="segment">
         <h2>Input section</h2>
-        <label for="app-url">Application URL:</label>
-        <input type="text" id="app-url" />
-        <label for="open-browser">Open browser:</label>
-        <input type="checkbox" id="open-browser" />
+        <div class="segment-content">
+            <div class="input-container">
+                <label for="app-url">Application URL:</label>
+                <input type="text" id="app-url" />
+            </div>
+            <div class="input-container">
+                <label for="open-browser">Open browser:</label>
+                <input type="checkbox" id="open-browser" />
+            </div>
+        </div>
     </div>
     <div class="segment">
         <h2>Execution section</h2>
-        <button id="execute-button">Execute Script</button>
+        <div class="segment-content">
+            <button id="execute-button">Execute Script</button>
+        </div>
     </div>
     <div id="status"></div>
     <script>
+
+
         const {
             ipcRenderer
         } = require('electron');
@@ -155,7 +197,6 @@
             console.log("totally loaded");
             populateDropdowns();
         });
-
     </script>
 </body>
 
