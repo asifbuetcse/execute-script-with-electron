@@ -67,6 +67,13 @@
             background-color: white;
         }
 
+        #status {
+            margin-bottom: 20px;
+            padding: 20px;
+            width: 86%;
+            background-color: white;
+        }
+
         .segment-content {
             display: flex;
             flex-direction: column;
@@ -79,10 +86,6 @@
             align-items: center;
             justify-content: space-between;
             width: 100%;
-        }
-
-        #status {
-            margin-top: 30px;
         }
 
         label {
@@ -132,6 +135,7 @@ input[type="checkbox"]:checked {
             </div>
         </div>
     </div>
+    <div id="status"></div>
     <div class="segment">
         <h2>Input section</h2>
         <div class="segment-content">
@@ -151,10 +155,7 @@ input[type="checkbox"]:checked {
             <button id="execute-button">Execute Script</button>
         </div>
     </div>
-    <div id="status"></div>
     <script>
-
-
         const {
             ipcRenderer
         } = require('electron');
@@ -216,7 +217,7 @@ input[type="checkbox"]:checked {
             }
         });
 
-        ipcRenderer.on('file-uploaded', setUploadedFilePath);
+        // ipcRenderer.on('file-uploaded', setUploadedFilePath);
         ipcRenderer.on('script-executed', (event, stdout) => {
             document.getElementById('status').innerText =
                 'Script executed successfully. Check the console for output.';

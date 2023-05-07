@@ -81,18 +81,21 @@ function uploadFile(fileType, options) {
     dialog.showOpenDialog(mainWindow, options).then(({ filePaths }) => {
         if (filePaths.length > 0) {
             const filePath = filePaths[0];
+            const fileName = path.basename(filePath);
+            const fileExtension = path.extname(fileName);
+            const fileNameWithoutExtension = path.basename(fileName, fileExtension);
             let counter = 1;
-            const fileExtension = fileType === 'script' ? 'js' : 'json';
+            let newFileName = fileName;
 
-            while (fs.existsSync(`${fileType}_${counter}.${fileExtension}`)) {
+            while (fs.existsSync(newFileName)) {
+                newFileName = `${fileNameWithoutExtension}_${counter}${fileExtension}`;
                 counter++;
             }
 
-            const newFilePath = `${fileType}_${counter}.${fileExtension}`;
-            fs.copyFileSync(filePath, newFilePath);
-            console.log(`File uploaded: ${filePath} -> ${newFilePath}`);
-            mainWindow.webContents.send('file-uploaded', fileType, newFilePath);
-            logToFile(`File uploaded: ${filePath} -> ${newFilePath}`);
+            fs.copyFileSync(filePath, newFileName);
+            console.log(`File uploaded: ${filePath} -> ${newFileName}`);
+            mainWindow.webContents.send('file-uploaded', fileType, newFileName);
+            logToFile(`File uploaded: ${filePath} -> ${newFileName}`);
         }
     }).catch((err) => {
         console.error(`Error uploading file: ${err}`);
@@ -120,3 +123,4 @@ function logToFile(message) {
         }
     });
 }
+
