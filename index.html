@@ -244,6 +244,11 @@
             console.error('Script error:', stderr);
         });
 
+        ipcRenderer.on('upload-error', (event, errorMessage) => {
+            document.getElementById('status').innerText = errorMessage;
+        });
+
+
         function selectFile(event, fileType, fileSelector) {
             const selectedFile = document.getElementById(fileSelector).value;
             if (selectedFile) {

@@ -101,8 +101,6 @@ function execScript(scriptPath, url, headless) {
     });
 }
 
-
-
 function uploadFile(fileType, options) {
     dialog.showOpenDialog(mainWindow, options).then(({ filePaths }) => {
         if (filePaths.length > 0) {
@@ -118,16 +116,60 @@ function uploadFile(fileType, options) {
                 counter++;
             }
 
-            fs.copyFileSync(filePath, newFileName);
-            console.log(`File uploaded: ${filePath} -> ${newFileName}`);
-            mainWindow.webContents.send('file-uploaded', fileType, newFileName);
-            logToFile(`File uploaded: ${filePath} -> ${newFileName}`);
+            if (options.filters[0].name === 'JSON') {
+                // Read the contents of the JSON file
+                fs.readFile(filePath, 'utf8', (err, contents) => {
+                    if (err) {
+                        console.error('Error reading JSON file:', err);
+                        return;
+                    }
+
+                    try {
+                        const jsonData = JSON.parse(contents);
+
+                        // Validate the JSON data
+                        if (!Array.isArray(jsonData)) {
+                            throw new Error('JSON data must be an array.');
+                        }
+
+                        jsonData.forEach((item) => {
+                            if (
+                                !item.hasOwnProperty('login') ||
+                                !item.hasOwnProperty('password')
+                            ) {
+                                throw new Error(
+                                    'Each JSON object must have "login" and "password" properties.'
+                                );
+                            }
+                        });
+
+                        // JSON is valid, copy the file
+                        fs.copyFileSync(filePath, newFileName);
+                        console.log(`File uploaded: ${filePath} -> ${newFileName}`);
+                        mainWindow.webContents.send('file-uploaded', fileType, newFileName);
+                        logToFile(`File uploaded: ${filePath} -> ${newFileName}`);
+                    } catch (error) {
+                        console.error('Invalid JSON format:', error);
+                        mainWindow.webContents.send(
+                            'upload-error',
+                            'Invalid JSON format: ' + error.message
+                        );
+                    }
+                });
+            } else {
+                // No validation needed for non-JSON files, just copy the file
+                fs.copyFileSync(filePath, newFileName);
+                console.log(`File uploaded: ${filePath} -> ${newFileName}`);
+                mainWindow.webContents.send('file-uploaded', fileType, newFileName);
+                logToFile(`File uploaded: ${filePath} -> ${newFileName}`);
+            }
         }
     }).catch((err) => {
         console.error(`Error uploading file: ${err}`);
         logToFile(`Error uploading file: ${err}`);
     });
 }
+
 
 function getFiles(fileType) {
     const extension = fileType === 'script' ? '.js' : '.json';
