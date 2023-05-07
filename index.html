@@ -11,13 +11,37 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
         }
 
+        #app-url {
+            background-color: white;
+            border: 1px solid black;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+
+
+        .dropdown {
+            background-color: white;
+            border: 1px solid black;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            outline: none;
+            width: 24%;
+        }
+
         h1 {
             margin-bottom: 20px;
+        }
+
+        .input-container {
+            margin-bottom: 1.25%;
         }
 
         button {
@@ -38,9 +62,8 @@
 
         .segment {
             margin-bottom: 20px;
-            border: 1px solid #aaa;
             padding: 20px;
-            width: 50%;
+            width: 86%;
             background-color: white;
         }
 
@@ -69,6 +92,26 @@
         select {
             margin-bottom: 10px;
         }
+
+        input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
+  border: 2px solid #ccc;
+  background-color: white;
+  transition: all 0.3s ease-in-out;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #4CAF50;
+  border: 2px solid #4CAF50;
+}
+
     </style>
 </head>
 
@@ -80,12 +123,12 @@
             <div class="input-container">
                 <button id="upload-script-button">Upload Script</button>
                 <label for="scripts-dropdown">Script:</label>
-                <select id="scripts-dropdown"></select>
+                <select id="scripts-dropdown" class="dropdown"></select>
             </div>
             <div class="input-container">
                 <button id="upload-credentials-button">Upload Credentials</button>
                 <label for="credentials-dropdown">Credentials:</label>
-                <select id="credentials-dropdown"></select>
+                <select id="credentials-dropdown" class="dropdown"></select>
             </div>
         </div>
     </div>
@@ -94,7 +137,7 @@
         <div class="segment-content">
             <div class="input-container">
                 <label for="app-url">Application URL:</label>
-                <input type="text" id="app-url" />
+                <input type="text" id="app-url"/>
             </div>
             <div class="input-container">
                 <label for="open-browser">Open browser:</label>
