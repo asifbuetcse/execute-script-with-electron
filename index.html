@@ -208,6 +208,17 @@
         document.getElementById('upload-credentials-button').addEventListener('click', () => uploadFile('credentials', 'credentials-dropdown'));
 
         document.getElementById('execute-button').addEventListener('click', () => {
+            if (!scriptPath) {
+                const scriptsDropdown = document.getElementById('scripts-dropdown');
+                const selectedScript = scriptsDropdown.value;
+
+                if (selectedScript) {
+                    scriptPath = selectedScript;
+                } else {
+                    console.error('No script file selected.');
+                    return;
+                }
+            }
             if (scriptPath) {
                 console.log('Executing script:', scriptPath);
                 const url = document.getElementById('app-url').value;
