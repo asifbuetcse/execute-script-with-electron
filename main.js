@@ -1,6 +1,9 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
+``
+
 
 let mainWindow;
 
@@ -52,7 +55,8 @@ ipcMain.on('upload-file', (event, fileType) => {
     uploadFile(fileType, options);
 });
 
-ipcMain.on('execute-script', (event, scriptPath) => {
+ipcMain.on('execute-script', (event, scriptPath, url, headless) => {
+    console.log("headless", headless);
     console.log('Executing script:', scriptPath);
     logToFile(`Executing script: ${scriptPath}`);
 
@@ -69,13 +73,35 @@ ipcMain.on('execute-script', (event, scriptPath) => {
                 }
                 console.log('Puppeteer installed successfully:', stdout);
                 logToFile(`Puppeteer installed successfully: ${stdout}`);
-                execScript(scriptPath);
+                execScript(scriptPath, url, headless);
             });
         } else {
-            execScript(scriptPath);
+            execScript(scriptPath, url, headless);
         }
     });
 });
+
+
+function execScript(scriptPath, url, headless) {
+    headless = !headless;
+    const scriptCommand = `node ${scriptPath} ${url} ${headless}`;
+    console.log('Executing command:', scriptCommand);
+    logToFile(`Executing command: ${scriptCommand}`);
+
+    exec(scriptCommand, (error, stdout, stderr) => {
+        if (error) {
+            console.error('Error executing script:', error);
+            logToFile(`Error executing script: ${error}`);
+            mainWindow.webContents.send('script-error', `Error executing script: ${error}`);
+            return;
+        }
+        console.log('Script executed successfully:', stdout);
+        logToFile(`Script executed successfully: ${stdout}`);
+        mainWindow.webContents.send('script-executed', stdout);
+    });
+}
+
+
 
 function uploadFile(fileType, options) {
     dialog.showOpenDialog(mainWindow, options).then(({ filePaths }) => {

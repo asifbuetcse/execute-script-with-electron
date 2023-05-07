@@ -97,24 +97,23 @@
         }
 
         input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  border-radius: 4px;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  outline: none;
-  border: 2px solid #ccc;
-  background-color: white;
-  transition: all 0.3s ease-in-out;
-}
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            outline: none;
+            border: 2px solid #ccc;
+            background-color: white;
+            transition: all 0.3s ease-in-out;
+        }
 
-input[type="checkbox"]:checked {
-  background-color: #4CAF50;
-  border: 2px solid #4CAF50;
-}
-
+        input[type="checkbox"]:checked {
+            background-color: #4CAF50;
+            border: 2px solid #4CAF50;
+        }
     </style>
 </head>
 
@@ -141,11 +140,11 @@ input[type="checkbox"]:checked {
         <div class="segment-content">
             <div class="input-container">
                 <label for="app-url">Application URL:</label>
-                <input type="text" id="app-url"/>
+                <input type="text" id="app-url" value="http://localhost:16509/Login.aspx" />
             </div>
             <div class="input-container">
                 <label for="open-browser">Open browser:</label>
-                <input type="checkbox" id="open-browser" />
+                <input type="checkbox" id="open-browser" checked />
             </div>
         </div>
     </div>
@@ -211,11 +210,15 @@ input[type="checkbox"]:checked {
         document.getElementById('execute-button').addEventListener('click', () => {
             if (scriptPath) {
                 console.log('Executing script:', scriptPath);
-                ipcRenderer.send('execute-script', scriptPath);
+                const url = document.getElementById('app-url').value;
+                const headless = document.getElementById('open-browser').checked;
+                console.log("headless = ", headless);
+                ipcRenderer.send('execute-script', scriptPath, url, headless);
             } else {
                 console.error('No script file selected.');
             }
         });
+
 
         // ipcRenderer.on('file-uploaded', setUploadedFilePath);
         ipcRenderer.on('script-executed', (event, stdout) => {
