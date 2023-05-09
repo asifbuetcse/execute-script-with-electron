@@ -223,7 +223,7 @@
                 console.log('Executing script:', scriptPath);
                 const url = document.getElementById('app-url').value;
                 const headless = document.getElementById('open-browser').checked;
-                console.log("headless = ", headless);
+                document.getElementById('status').innerHTML = `<div>Script is executing .....</div>`;
                 ipcRenderer.send('execute-script', scriptPath, url, headless);
             } else {
                 console.error('No script file selected.');

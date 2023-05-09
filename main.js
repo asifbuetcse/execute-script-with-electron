@@ -9,8 +9,8 @@ let mainWindow;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1000,
+        height: 750,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -20,6 +20,7 @@ function createWindow() {
     mainWindow.setMenuBarVisibility(false);
 
     mainWindow.loadFile('index.html');
+    logToFile('--------------------Application Started-------------------');
 }
 
 app.whenReady().then(createWindow);
@@ -56,7 +57,7 @@ ipcMain.on('upload-file', (event, fileType) => {
 });
 
 ipcMain.on('execute-script', (event, scriptPath, url, headless) => {
-    console.log("headless", headless);
+    logToFile('--------------------Script Execution Started-------------------');
     console.log('Executing script:', scriptPath);
     logToFile(`Executing script: ${scriptPath}`);
 
@@ -173,7 +174,16 @@ function uploadFile(fileType, options) {
 
 function getFiles(fileType) {
     const extension = fileType === 'script' ? '.js' : '.json';
-    const files = fs.readdirSync('.').filter(file => file.endsWith(extension));
+    const files = fs.readdirSync('.')
+        .filter(file => file.endsWith(extension))
+        .map(file => {
+            const stats = fs.statSync(file);
+            return {
+                name: file,
+                lastModified: stats.mtime.getTime()
+            };
+        })
+        .sort((a, b) => b.lastModified - a.lastModified).map(file => file.name);
     return files;
 }
 
